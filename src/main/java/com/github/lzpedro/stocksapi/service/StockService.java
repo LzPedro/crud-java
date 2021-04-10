@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.lzpedro.stocksapi.model.Stock;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,25 +33,26 @@ public class StockService {
         }
     }
 
-    private Double parseQuote(JSONObject stock) {
+    private void setStockValues(JSONObject jsonStock, Stock stock) {
         try {
-            return new Double((String) stock.get("quote"));
+            String quotes = (String) jsonStock.getString("quotes");
+            quotes = quotes.replace("[", "");
+            quotes = quotes.replace("]", "");
+            //List<String> items = Arrays.asList(quotes.split("\\s*,\\s*"));
+            List<String> StringList = new ArrayList<>(Arrays.asList(quotes.split(",")));
+            for (int i = 0; i < StringList.size(); ++i) {
+                 stock.add(Double.parseDouble(StringList.get(i)));
+                 Logger.getLogger(StockService.class.getName()).log(Level.SEVERE, StringList.get(i));
+            }
         } catch (JSONException ex) {
             Logger.getLogger(StockService.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
-    }
-
-    private void setStockValues(JSONObject jsonStock, Stock stock) {
-        if (parseQuote(jsonStock) != null) {
-            stock.add(parseQuote(jsonStock));
         }
     }
 
     public Stock create(JSONObject jsonStock) {
         try {
             Stock stock = new Stock();
-            stock.setStockName((String) jsonStock.get("name"));
+            stock.setStockName((String) jsonStock.getString("name"));
             setStockValues(jsonStock, stock);
 
             return stock;

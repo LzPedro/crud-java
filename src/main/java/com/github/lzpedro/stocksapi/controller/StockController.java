@@ -9,7 +9,9 @@ import com.github.lzpedro.stocksapi.model.Stock;
 import com.github.lzpedro.stocksapi.service.StockService;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import lombok.var;
+import org.json.JSONException;
 import org.slf4j.LoggerFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -35,7 +37,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/stock")
 public class StockController {
 
-    //private static final Logger logger = LoggerFactory.getLogger(StockController.class);
+    private static final Logger logger = LoggerFactory.getLogger(StockController.class);
     //private static final Logger logger = Logger.getLogger(StockController.class);
     @Autowired
     private StockService stockService;
@@ -62,21 +64,29 @@ public class StockController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<Stock> create(@RequestBody JSONObject stock) {
+    public ResponseEntity<Stock> create(@RequestBody String stockString) {
         try {
-            if (stockService.isJSONValid(stock.toString())) {
-                Stock stockCreated = stockService.create(stock);
-                URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path(stockCreated.getStockName()).build().toUri();
+            JSONObject stock = new JSONObject(stockString);
+            try {
+                logger.error("quotes");
+                logger.error((String) stock.getString("quotes"));
+                if (stockService.isJSONValid(stock.toString())) {
+                    Stock stockCreated = stockService.create(stock);
+                    URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path(stockCreated.getStockName()).build().toUri();
 
-                stockService.add(stockCreated);
-                return ResponseEntity.created(uri).body(null);
-            } else {
-                return ResponseEntity.badRequest().body(null);
+                    stockService.add(stockCreated);
+                    return ResponseEntity.created(uri).body(null);
+                } else {
+                    return ResponseEntity.badRequest().body(null);
+                }
+            } catch (Exception e) {
+                //logger.error("JSON fields are not parsable. " + e);
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
             }
-        } catch (Exception e) {
-            //logger.error("JSON fields are not parsable. " + e);
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
+        } catch (JSONException err) {
+            logger.error("Error", err.toString());
         }
+        return null;
     }
 
     @PutMapping(path = "/{name}", produces = {"application/json"})
