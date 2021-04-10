@@ -44,12 +44,17 @@ public class StockController {
     private StockService stockService;
 
     @GetMapping
-    public ResponseEntity<List<Stock>> find() {
+    public ResponseEntity<List<Stock>> findAll() {
         if (stockService.find().isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         //logger.info(stockService.find());
         return ResponseEntity.ok(stockService.find());
+    }
+    
+    @GetMapping(path = "/{name}", produces = {"application/json"})
+    public ResponseEntity<Stock> find(@PathVariable("name") String name) {
+        return ResponseEntity.ok(stockService.findByName(name));
     }
 
     @DeleteMapping
