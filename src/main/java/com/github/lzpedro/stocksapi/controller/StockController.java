@@ -10,6 +10,7 @@ import com.github.lzpedro.stocksapi.service.StockService;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import lombok.var;
 import org.json.JSONException;
 import org.slf4j.LoggerFactory;
@@ -86,27 +87,33 @@ public class StockController {
         } catch (JSONException err) {
             logger.error("Error", err.toString());
         }
-        return null;
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
     }
 
     @PutMapping(path = "/{name}", produces = {"application/json"})
-    public ResponseEntity<Stock> update(@PathVariable("name") String name, @RequestBody JSONObject stock) {
+    public ResponseEntity<Stock> update(@PathVariable("name") String name, @RequestBody String stockString) {
         try {
-            if (stockService.isJSONValid(stock.toString())) {
-                Stock stockToUpdate = stockService.findByName(name);
-                if (stockToUpdate == null) {
-                    //logger.error("Stock not found.");
-                    return ResponseEntity.notFound().build();
+            JSONObject stock = new JSONObject(stockString);
+            try {
+                if (stockService.isJSONValid(stock.toString())) {
+                    Stock stockToUpdate = stockService.findByName(name);
+                    if (stockToUpdate == null) {
+                        //logger.error("Stock not found.");
+                        return ResponseEntity.notFound().build();
+                    } else {
+                        stockToUpdate = stockService.update(stockToUpdate, stock);
+                        return ResponseEntity.ok(stockToUpdate);
+                    }
                 } else {
-                    stockToUpdate = stockService.update(stockToUpdate, stock);
-                    return ResponseEntity.ok(stockToUpdate);
+                    return ResponseEntity.badRequest().body(null);
                 }
-            } else {
-                return ResponseEntity.badRequest().body(null);
+            } catch (Exception e) {
+                //logger.error("JSON fields are not parsable." + e);
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
             }
-        } catch (Exception e) {
-            //logger.error("JSON fields are not parsable." + e);
-            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
+        } catch (JSONException ex) {
+            java.util.logging.Logger.getLogger(StockController.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
     }
 }
