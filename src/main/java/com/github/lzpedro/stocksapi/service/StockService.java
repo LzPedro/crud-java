@@ -61,7 +61,6 @@ public class StockService {
     }
 
     public Stock update(Stock stock, JSONObject jsonStock) {
-
         setStockValues(jsonStock, stock);
         return stock;
     }
@@ -76,7 +75,7 @@ public class StockService {
         return stocks;
     }
 
-    public Stock findById(String stockName) {
+    public Stock findByName(String stockName) {
         return stocks.stream().filter(t -> stockName.equals(t.getStockName())).collect(Collectors.toList()).get(0);
     }
 
