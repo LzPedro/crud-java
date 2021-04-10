@@ -8,6 +8,7 @@ package com.github.lzpedro.stocksapi.controller;
 import com.github.lzpedro.stocksapi.model.Stock;
 import com.github.lzpedro.stocksapi.service.StockService;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -44,20 +46,18 @@ public class StockController {
     private StockService stockService;
 
     @GetMapping
-    public ResponseEntity<List<Stock>> findAll() {
-        if (stockService.find().isEmpty()) {
-            //no stock found
-            return ResponseEntity.notFound().build();
-        }
-        //return all stocks
-        return ResponseEntity.ok(stockService.find());
-    }
-    
-    @GetMapping(path = "/{name}", produces = {"application/json"})
-    public ResponseEntity<Stock> find(@PathVariable("name") String name) {
+    public ResponseEntity<List<Stock>> find(@RequestParam(required = false,value = "name") String name) {
         try{
-            //return stock by name
-            return ResponseEntity.ok(stockService.findByName(name));
+            List<Stock> stocks;
+            stocks = new ArrayList<>();
+            if(name!=null){
+                stocks.add(stockService.findByName(name));
+                return ResponseEntity.ok(stocks);
+            }
+            else{
+                return ResponseEntity.ok(stockService.find());
+            }
+            
         }catch (Exception e) {
             // couldn't find a stock
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
