@@ -80,8 +80,12 @@ public class StockService {
     public Stock findByName(String stockName) {
         return stocks.stream().filter(t -> stockName.equals(t.getStockName())).collect(Collectors.toList()).get(0);
     }
+    
+     public void deleteByName(String stockName) {
+        stocks.removeIf( name -> name.getStockName().equals(stockName));
+    }
 
-    public void delete() {
+    public void deleteAll() {
         stocks.clear();
     }
 

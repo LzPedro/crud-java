@@ -57,10 +57,10 @@ public class StockController {
         return ResponseEntity.ok(stockService.findByName(name));
     }
 
-    @DeleteMapping
-    public ResponseEntity<Boolean> delete() {
+    @DeleteMapping(path = "/{name}", produces = {"application/json"})
+    public ResponseEntity<Boolean> delete(@PathVariable("name") String name) {
         try {
-            stockService.delete();
+            stockService.deleteByName(name);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             //logger.error(e);
