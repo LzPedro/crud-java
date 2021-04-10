@@ -27,7 +27,7 @@ public class Stock {
     private List<Double> quotes =  new ArrayList<>();
 
     public void add(Double quote) {
-        // Add a String to my list of String
+        // Add a quote(Double) to my list of quotes(Double)
         quotes.add(quote);
     }
 }

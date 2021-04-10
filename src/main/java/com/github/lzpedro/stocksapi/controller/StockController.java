@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -39,31 +40,38 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 public class StockController {
 
     private static final Logger logger = LoggerFactory.getLogger(StockController.class);
-    //private static final Logger logger = Logger.getLogger(StockController.class);
     @Autowired
     private StockService stockService;
 
     @GetMapping
     public ResponseEntity<List<Stock>> findAll() {
         if (stockService.find().isEmpty()) {
+            //no stock found
             return ResponseEntity.notFound().build();
         }
-        //logger.info(stockService.find());
+        //return all stocks
         return ResponseEntity.ok(stockService.find());
     }
     
     @GetMapping(path = "/{name}", produces = {"application/json"})
     public ResponseEntity<Stock> find(@PathVariable("name") String name) {
-        return ResponseEntity.ok(stockService.findByName(name));
+        try{
+            //return stock by name
+            return ResponseEntity.ok(stockService.findByName(name));
+        }catch (Exception e) {
+            // couldn't find a stock
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     @DeleteMapping(path = "/{name}", produces = {"application/json"})
     public ResponseEntity<Boolean> delete(@PathVariable("name") String name) {
         try {
+            //search and delete stock by name
             stockService.deleteByName(name);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
-            //logger.error(e);
+            //couldn't delete a stock
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -74,38 +82,40 @@ public class StockController {
         try {
             JSONObject stock = new JSONObject(stockString);
             try {
-                logger.error("quotes");
-                logger.error((String) stock.getString("quotes"));
-                if (stockService.isJSONValid(stock.toString())) {
+                if (stockService.isJSONValid(stock.toString())) { //verify if is a valid json
+                    //create stock
                     Stock stockCreated = stockService.create(stock);
                     URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path(stockCreated.getStockName()).build().toUri();
-
+                    //add stock
                     stockService.add(stockCreated);
                     return ResponseEntity.created(uri).body(null);
                 } else {
                     return ResponseEntity.badRequest().body(null);
                 }
             } catch (Exception e) {
-                //logger.error("JSON fields are not parsable. " + e);
+                //JSON fields are not parsable.
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
             }
         } catch (JSONException err) {
+            //couldn't create JSON from String
             logger.error("Error", err.toString());
         }
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
     }
 
-    @PutMapping(path = "/{name}", produces = {"application/json"})
+    @PatchMapping(path = "/{name}", produces = {"application/json"})
     public ResponseEntity<Stock> update(@PathVariable("name") String name, @RequestBody String stockString) {
         try {
             JSONObject stock = new JSONObject(stockString);
             try {
                 if (stockService.isJSONValid(stock.toString())) {
+                    //find stock by name
                     Stock stockToUpdate = stockService.findByName(name);
                     if (stockToUpdate == null) {
-                        //logger.error("Stock not found.");
+                        //Stock not found
                         return ResponseEntity.notFound().build();
                     } else {
+                        //Update stock by name
                         stockToUpdate = stockService.update(stockToUpdate, stock);
                         return ResponseEntity.ok(stockToUpdate);
                     }
@@ -113,10 +123,11 @@ public class StockController {
                     return ResponseEntity.badRequest().body(null);
                 }
             } catch (Exception e) {
-                //logger.error("JSON fields are not parsable." + e);
+                //JSON fields are not parsable.
                 return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);
             }
         } catch (JSONException ex) {
+            //couldn't create JSON from String
             java.util.logging.Logger.getLogger(StockController.class.getName()).log(Level.SEVERE, null, ex);
         }
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(null);

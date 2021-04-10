@@ -35,12 +35,13 @@ public class StockService {
 
     private void setStockValues(JSONObject jsonStock, Stock stock) {
         try {
+            //parse String
             String quotes = (String) jsonStock.getString("quotes");
             quotes = quotes.replace("[", "");
             quotes = quotes.replace("]", "");
-            //List<String> items = Arrays.asList(quotes.split("\\s*,\\s*"));
             List<String> StringList = new ArrayList<>(Arrays.asList(quotes.split(",")));
             for (int i = 0; i < StringList.size(); ++i) {
+                //transform from String to double and add to quotes of stock
                  stock.add(Double.parseDouble(StringList.get(i)));
                  Logger.getLogger(StockService.class.getName()).log(Level.SEVERE, StringList.get(i));
             }
@@ -52,7 +53,9 @@ public class StockService {
     public Stock create(JSONObject jsonStock) {
         try {
             Stock stock = new Stock();
+            //set stockName given Json name value
             stock.setStockName((String) jsonStock.getString("name"));
+            //add quote to quotes
             setStockValues(jsonStock, stock);
 
             return stock;
@@ -63,38 +66,41 @@ public class StockService {
     }
 
     public Stock update(Stock stock, JSONObject jsonStock) {
+        //add quote to quotes
         setStockValues(jsonStock, stock);
         return stock;
     }
 
     public void add(Stock stock) {
+        //create Stock list
         createStockList();
         stocks.add(stock);
     }
 
     public List<Stock> find() {
+        //return all stocks
         createStockList();
         return stocks;
     }
 
     public Stock findByName(String stockName) {
+        //return stock by stockName
         return stocks.stream().filter(t -> stockName.equals(t.getStockName())).collect(Collectors.toList()).get(0);
     }
     
      public void deleteByName(String stockName) {
+        //remove stock by stockName
         stocks.removeIf( name -> name.getStockName().equals(stockName));
     }
 
     public void deleteAll() {
+        //delete all stocks
         stocks.clear();
-    }
-
-    public void clearObjects() {
-        stocks = null;
     }
 
     public boolean isJSONValid(String jsonInString) {
         try {
+            //verify if the String is in a valid JSON format
             return new ObjectMapper().readTree(jsonInString) != null;
         } catch (IOException e) {
             return false;
